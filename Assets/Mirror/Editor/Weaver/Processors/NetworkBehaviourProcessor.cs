@@ -875,9 +875,16 @@ namespace Mirror.Weaver
 
 
             // if not SenderConnection And not TargetRpc NetworkConnection first param
-            if (isNetworkConnection && !(callType == RemoteCallType.TargetRpc && firstParam))
+            if (!isSenderConnection && isNetworkConnection && !(callType == RemoteCallType.TargetRpc && firstParam))
             {
-                Weaver.Error($"{method.Name} has invalid parameter {param}. Cannot pass NeworkConnections", method);
+                if (callType == RemoteCallType.Command)
+                {
+                    Weaver.Error($"{method.Name} has invalid parameter {param}, Cannot pass NeworkConnections. Instead use use '[SenderConnection] NetworkConnection conn = null' to get the sender's connection on the server", method);
+                }
+                else
+                {
+                    Weaver.Error($"{method.Name} has invalid parameter {param}. Cannot pass NeworkConnections", method);
+                }
                 return false;
             }
 
