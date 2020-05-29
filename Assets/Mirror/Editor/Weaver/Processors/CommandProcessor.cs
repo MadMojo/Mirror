@@ -51,7 +51,7 @@ namespace Mirror.Weaver
             NetworkBehaviourProcessor.WriteCreateWriter(worker);
 
             // write all the arguments that the user passed to the Cmd call
-            if (!NetworkBehaviourProcessor.WriteArguments(worker, md, false))
+            if (!NetworkBehaviourProcessor.WriteArguments(worker, md, RemoteCallType.Command))
                 return null;
 
             string cmdName = md.Name;
@@ -96,23 +96,25 @@ namespace Mirror.Weaver
                 ((ShipControl)obj).CmdThrust(reader.ReadSingle(), (int)reader.ReadPackedUInt32());
             }
         */
-        public static MethodDefinition ProcessCommandInvoke(TypeDefinition td, MethodDefinition md, MethodDefinition cmdCallFunc)
+        public static MethodDefinition ProcessCommandInvoke(TypeDefinition td, MethodDefinition method, MethodDefinition cmdCallFunc)
         {
-            MethodDefinition cmd = new MethodDefinition(CmdPrefix + md.Name,
+            MethodDefinition cmd = new MethodDefinition(CmdPrefix + method.Name,
                 MethodAttributes.Family | MethodAttributes.Static | MethodAttributes.HideBySig,
                 Weaver.voidType);
 
             ILProcessor worker = cmd.Body.GetILProcessor();
             Instruction label = worker.Create(OpCodes.Nop);
 
-            NetworkBehaviourProcessor.WriteServerActiveCheck(worker, md.Name, label, "Command");
+            NetworkBehaviourProcessor.WriteServerActiveCheck(worker, method.Name, label, "Command");
 
             // setup for reader
             worker.Append(worker.Create(OpCodes.Ldarg_0));
             worker.Append(worker.Create(OpCodes.Castclass, td));
 
-            if (!NetworkBehaviourProcessor.ReadArguments(md, worker, false))
+            if (!NetworkBehaviourProcessor.ReadArguments(method, worker, RemoteCallType.Command))
                 return null;
+
+            AddSenderConnection(method, worker);
 
             // invoke actual command function
             worker.Append(worker.Create(OpCodes.Callvirt, cmdCallFunc));
@@ -121,6 +123,18 @@ namespace Mirror.Weaver
             NetworkBehaviourProcessor.AddInvokeParameters(cmd.Parameters);
             td.Methods.Add(cmd);
             return cmd;
+        }
+
+        static void AddSenderConnection(MethodDefinition method, ILProcessor worker)
+        {
+            foreach (ParameterDefinition param in method.Parameters)
+            {
+                if (NetworkBehaviourProcessor.IsSenderConnection(param, RemoteCallType.Command))
+                {
+                    // TODO Write Sender's Connection here
+                    worker.Append(worker.Create(OpCodes.Ldnull));
+                }
+            }
         }
 
         public static bool ProcessMethodsValidateCommand(MethodDefinition md)
