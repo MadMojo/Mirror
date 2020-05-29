@@ -313,7 +313,7 @@ namespace Mirror.Weaver
             worker.Append(worker.Create(OpCodes.Ldnull));
             worker.Append(worker.Create(OpCodes.Ldftn, func));
 
-            worker.Append(worker.Create(OpCodes.Newobj, Weaver.CmdDelegateConstructor));
+            worker.Append(worker.Create(OpCodes.Newobj, Weaver.RemoteDelegateConstructor));
             //
             worker.Append(worker.Create(OpCodes.Call, registerMethod));
         }
@@ -329,7 +329,7 @@ namespace Mirror.Weaver
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldnull));
             awakeWorker.Append(awakeWorker.Create(OpCodes.Ldftn, func));
 
-            awakeWorker.Append(awakeWorker.Create(OpCodes.Newobj, Weaver.CmdDelegateConstructor));
+            awakeWorker.Append(awakeWorker.Create(OpCodes.Newobj, Weaver.CommandDelegateConstructor));
 
             awakeWorker.Append(awakeWorker.Create(ignoreAuthority ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
 
